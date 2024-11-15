@@ -3,7 +3,7 @@ from Script import script
 from pyrogram import Client, filters, enums
 from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import *
-from database.ia_filterdb import Media, get_file_details, unpack_new_file_id, get_bad_files
+from database.ia_filterdb import get_file_details, unpack_new_file_id, get_bad_files
 from database.users_chats_db import db, delete_all_referal_users, get_referal_users_count, get_referal_all_users, referal_add_user
 from database.join_reqs import JoinReqs
 from info import *
@@ -134,14 +134,14 @@ async def auto_approve(client, message: ChatJoinRequest):
             chat_id = temp.SHORT.get(user)
             settings = await get_settings(chat_id)
             files_ = await get_file_details(file_id)
-            files = files_[0]
+            files = files_
             g = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start=file_{file_id}")
             button = [[
                 InlineKeyboardButton('📂 Dᴏᴡɴʟᴏᴀᴅ Nᴏᴡ 📂', url=g)
             ],[
                 InlineKeyboardButton('⁉️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ⁉️', url=await get_tutorial(chat_id))
             ]]
-            k = await client.send_message(chat_id=user,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files.file_name}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files.file_size)}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(button))
+            k = await client.send_message(chat_id=user,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files['file_name']}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files['file_size'])}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(button))
             await asyncio.sleep(1200)
             await k.edit("<b>Your message is successfully deleted!!!</b>")
             return
@@ -154,9 +154,9 @@ async def auto_approve(client, message: ChatJoinRequest):
             for file in files:
                 file_id = file.file_id
                 files_ = await get_file_details(file_id)
-                files1 = files_[0]
-                title = ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1.file_name.split()))
-                size=get_size(files1.file_size)
+                files1 = files_
+                title = ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1["file_name"].split()))
+                size=get_size(files1["file_size"])
                 f_caption=files1.caption
                 if CUSTOM_FILE_CAPTION:
                     try:
@@ -165,7 +165,7 @@ async def auto_approve(client, message: ChatJoinRequest):
                         logger.exception(e)
                         f_caption=f_caption
                 if f_caption is None:
-                    f_caption = f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1.file_name.split()))}"
+                    f_caption = f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1['file_name'].split()))}"
                 if not await db.has_premium_access(message.from_user.id):
                     if not await check_verification(client, message.from_user.id) and VERIFY == True:
                         btn = [[
@@ -226,7 +226,7 @@ async def auto_approve(client, message: ChatJoinRequest):
                 ],[
                     InlineKeyboardButton('⁉️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ⁉️', url=await get_tutorial(chat_id))
                 ]]
-                k = await client.send_message(chat_id=message.from_user.id,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files.file_name}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files.file_size)}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(button))
+                k = await client.send_message(chat_id=message.from_user.id,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files['file_name']}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files['file_size'])}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(button))
                 await asyncio.sleep(1200)
                 await k.edit("<b>Your message is successfully deleted!!!</b>")
                 return
@@ -296,10 +296,10 @@ async def auto_approve(client, message: ChatJoinRequest):
             except:
                 pass
             return await message.reply('No such file exist.')
-        files = files_[0]
-        title = '@VJ_Bots  ' + ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files.file_name.split()))
-        size=get_size(files.file_size)
-        f_caption=files.caption
+        files = files_
+        title = '@VJ_Bots  ' + ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files["file_name"].split()))
+        size=get_size(files["file_size"])
+        f_caption=files["caption"]
         if CUSTOM_FILE_CAPTION:
             try:
                 f_caption=CUSTOM_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
@@ -307,7 +307,7 @@ async def auto_approve(client, message: ChatJoinRequest):
                 logger.exception(e)
                 f_caption=f_caption
         if f_caption is None:
-            f_caption = f"@VJ_Bots  {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files.file_name.split()))}"
+            f_caption = f"@VJ_Bots  {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files['file_name'].split()))}"
         if not await db.has_premium_access(message.from_user.id):
             if not await check_verification(client, message.from_user.id) and VERIFY == True:
                 btn = [[

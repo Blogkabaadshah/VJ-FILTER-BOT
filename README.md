@@ -12,6 +12,7 @@
 <b>
   
 - [x] Clone Feature & On / Off
+- [x] Multiple Database Support & On / Off
 - [x] Premium Plan Feature 
 - [x] Refer To Get Premium
 - [x] Ai Spell Check 
@@ -19,7 +20,7 @@
 - [x] Rename Feature & On / Off
 - [x] Premium And Refer On / Off 
 - [x] Stream Feature On / Off 
-- [x] Url Shortner On / Off Feature 
+- [x] Url Shortner On / Off  
 - [x] Pm Search On / Off
 - [x] Request To Join Force Subscribe With Auto File Send 
 - [x] Custom Stream
@@ -27,7 +28,7 @@
 - [x] Language & Season & Quality & Episode & Year Choose Option
 - [x] Auto Approve & On / Off
 - [x] Custom Url Shortner Support
-- [x] Token Verification 
+- [x] Token Verification & On / Off
 - [x] Send All Button 
 - [x] Custom Tutorial Button
 - [x] Bot Pm File Auto Delete 
@@ -126,9 +127,7 @@ Join My <a href='https://telegram.dog/vj_botz'>Update Channel</a> For More Updat
 <details><summary><b>Deploy To Heroku</b></summary>
 <p>
 <br>
-<a href="https://heroku.com/deploy?template=https://github.com/VJBots/VJ-Filter-Bot">
-  <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy To Heroku">
-</a>
+<b>First Connect Your GitHub Account Then Select Repo And Deploy With Procfile.</b>
 </p>
 </details>
 
@@ -197,11 +196,9 @@ Edit info.py with variables as given below then run bot
 
 ## Note 🏷️
  
-* [![Contact Developer](https://img.shields.io/static/v1?label=Contact+Developer&message=On+Telegram&color=critical)](https://telegram.me/KingVJ01)
+[![Contact Developer](https://img.shields.io/static/v1?label=Contact+Developer&message=On+Telegram&color=critical)](https://telegram.me/KingVJ01) 
 
-<b>[Note To A So Called Dev](https://telegram.dog/vj_botz): 
-
-Fork The Repo And Edit As Per Your Needs.</b>
+<b>Fork The Repo And Edit As Per Your Needs.</b>
 
 ## Disclaimer
 [![GNU Affero General Public License 2.0](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.en.html#header)    

@@ -12,9 +12,9 @@ from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerId
 from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from utils import get_size, is_subscribed, pub_is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings, get_shortlink, get_tutorial, send_all, get_cap
 from database.users_chats_db import db
-from database.ia_filterdb import Media, get_file_details, get_search_results, get_bad_files
+from database.ia_filterdb import col, sec_col, db as vjdb, sec_db, get_file_details, get_search_results, get_bad_files
 from database.filters_mdb import del_all, find_filter, get_filters
-from database.connections_mdb import active_connection, all_connections, delete_connection, if_active, make_active, make_inactive
+from database.connections_mdb import mydb, active_connection, all_connections, delete_connection, if_active, make_active, make_inactive
 from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
 from urllib.parse import quote_plus
 from TechVJ.util.file_properties import get_name, get_hash, get_media_file_size
@@ -96,13 +96,10 @@ async def next_page(bot, query):
         offset = int(offset)
     except:
         offset = 0
-    if BUTTONS.get(key)!=None:
-        search = BUTTONS.get(key)
-    else:
-        search = FRESH.get(key)
-    if not search:
-        await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name),show_alert=True)
-        return
+    search = FRESH.get(key)
+   # if not search:
+      #  await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name),show_alert=True)
+       # return
 
     files, n_offset, total = await get_search_results(query.message.chat.id, search, offset=offset, filter=True)
     try:
@@ -120,7 +117,7 @@ async def next_page(bot, query):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}", callback_data=f'{pre}#{file["file_id"]}'
                 ),
             ]
             for file in files
@@ -239,8 +236,8 @@ async def next_page(bot, query):
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
-    if not movies:
-        return await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name), show_alert=True)
+  #  if not movies:
+     #   return await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name), show_alert=True)
     if int(user) != 0 and query.from_user.id != int(user):
         return await query.answer(script.ALRT_TXT.format(query.from_user.first_name), show_alert=True)
     if movie_ == "close_spellcheck":
@@ -282,7 +279,10 @@ async def years_cb_handler(client: Client, query: CallbackQuery):
         pass
     _, key = query.data.split("#")
     search = FRESH.get(key)
-    search = search.replace(' ', '_')
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     btn = []
     for i in range(0, len(YEARS)-1, 4):
         row = []
@@ -306,7 +306,7 @@ async def years_cb_handler(client: Client, query: CallbackQuery):
     )
     req = query.from_user.id
     offset = 0
-    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ↭", callback_data=f"fy#homepage#{key}")])
+    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fy#homepage#{key}")])
 
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
@@ -316,7 +316,10 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
-    search = search.replace("_", " ")
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     baal = lang in search
     if baal:
         search = search.replace(lang, "")
@@ -348,7 +351,7 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}", callback_data=f'{pre}#{file["file_id"]}'
                 ),
             ]
             for file in files
@@ -400,6 +403,10 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
         btn.append(
             [InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄",callback_data="pages")]
         )
+    if lang != "homepage":
+        req = query.from_user.id
+        offset = 0
+        btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fy#homepage#{key}")])
     
     if not settings["button"]:
         cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -434,7 +441,10 @@ async def episodes_cb_handler(client: Client, query: CallbackQuery):
         pass
     _, key = query.data.split("#")
     search = FRESH.get(key)
-    search = search.replace(' ', '_')
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     btn = []
     for i in range(0, len(EPISODES)-1, 4):
         row = []
@@ -458,7 +468,7 @@ async def episodes_cb_handler(client: Client, query: CallbackQuery):
     )
     req = query.from_user.id
     offset = 0
-    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ↭", callback_data=f"fe#homepage#{key}")])
+    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fe#homepage#{key}")])
 
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
@@ -468,7 +478,10 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
-    search = search.replace("_", " ")
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     baal = lang in search
     if baal:
         search = search.replace(lang, "")
@@ -500,7 +513,7 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}", callback_data=f'{pre}#{file["file_id"]}'
                 ),
             ]
             for file in files
@@ -552,6 +565,10 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
         btn.append(
             [InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄",callback_data="pages")]
         )
+    if lang != "homepage":
+        req = query.from_user.id
+        offset = 0
+        btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fe#homepage#{key}")])
     
     if not settings["button"]:
         cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -588,7 +605,10 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
         pass
     _, key = query.data.split("#")
     search = FRESH.get(key)
-    search = search.replace(' ', '_')
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     btn = []
     for i in range(0, len(LANGUAGES)-1, 2):
         btn.append([
@@ -612,7 +632,7 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
     )
     req = query.from_user.id
     offset = 0
-    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ​↭", callback_data=f"fl#homepage#{key}")])
+    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ​↭", callback_data=f"fl#homepage#{key}")])
 
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
@@ -622,7 +642,10 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     _, lang, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
-    search = search.replace("_", " ")
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     baal = lang in search
     if baal:
         search = search.replace(lang, "")
@@ -654,7 +677,7 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}", callback_data=f'{pre}#{file["file_id"]}'
                 ),
             ]
             for file in files
@@ -706,6 +729,10 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
         btn.append(
             [InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄",callback_data="pages")]
         )
+    if lang != "homepage":
+        req = query.from_user.id
+        offset = 0
+        btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fl#homepage#{key}")])
     
     if not settings["button"]:
         cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -742,7 +769,10 @@ async def seasons_cb_handler(client: Client, query: CallbackQuery):
     _, key = query.data.split("#")
     search = FRESH.get(key)
     BUTTONS[key] = None
-    search = search.replace(' ', '_')
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     btn = []
     for i in range(0, len(SEASONS)-1, 2):
         btn.append([
@@ -766,7 +796,7 @@ async def seasons_cb_handler(client: Client, query: CallbackQuery):
     )
     req = query.from_user.id
     offset = 0
-    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ​↭", callback_data=f"next_{req}_{key}_{offset}")])
+    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ​↭", callback_data=f"next_{req}_{key}_{offset}")])
 
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
 
@@ -776,7 +806,10 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     _, seas, key = query.data.split("#")
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     search = FRESH.get(key)
-    search = search.replace("_", " ")
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     sea = ""
     season_search = ["s01","s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09", "s10", "season 01","season 02","season 03","season 04","season 05","season 06","season 07","season 08","season 09","season 10", "season 1","season 2","season 3","season 4","season 5","season 6","season 7","season 8","season 9"]
     for x in range (len(season_search)):
@@ -807,13 +840,13 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     BUTTONS0[key] = search
     
     files, _, _ = await get_search_results(chat_id, search, max_results=10)
-    files = [file for file in files if re.search(seas, file.file_name, re.IGNORECASE)]
+    files = [file for file in files if re.search(seas, file["file_name"], re.IGNORECASE)]
     
     seas1 = "s01" if seas == "season 1" else "s02" if seas == "season 2" else "s03" if seas == "season 3" else "s04" if seas == "season 4" else "s05" if seas == "season 5" else "s06" if seas == "season 6" else "s07" if seas == "season 7" else "s08" if seas == "season 8" else "s09" if seas == "season 9" else "s10" if seas == "season 10" else ""
     search1 = f"{search1} {seas1}"
     BUTTONS1[key] = search1
     files1, _, _ = await get_search_results(chat_id, search1, max_results=10)
-    files1 = [file for file in files1 if re.search(seas1, file.file_name, re.IGNORECASE)]
+    files1 = [file for file in files1 if re.search(seas1, file["file_name"], re.IGNORECASE)]
     
     if files1:
         files.extend(files1)
@@ -822,7 +855,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     search2 = f"{search2} {seas2}"
     BUTTONS2[key] = search2
     files2, _, _ = await get_search_results(chat_id, search2, max_results=10)
-    files2 = [file for file in files2 if re.search(seas2, file.file_name, re.IGNORECASE)]
+    files2 = [file for file in files2 if re.search(seas2, file["file_name"], re.IGNORECASE)]
 
     if files2:
         files.extend(files2)
@@ -837,7 +870,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}", callback_data=f'{pre}#{file["file_id"]}'
                 ),
             ]
             for file in files
@@ -868,15 +901,9 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
             InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
             InlineKeyboardButton("ʏᴇᴀʀs", callback_data=f"years#{key}")
         ])
-        
+    req = query.from_user.id
     offset = 0
-
-    btn.append([
-            InlineKeyboardButton(
-                text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ​↭",
-                callback_data=f"next_{req}_{key}_{offset}"
-                ),
-    ])
+    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"next_{req}_{key}_{offset}")])
     
     if not settings["button"]:
         cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
@@ -908,7 +935,10 @@ async def qualities_cb_handler(client: Client, query: CallbackQuery):
         pass
     _, key = query.data.split("#")
     search = FRESH.get(key)
-    search = search.replace(' ', '_')
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     btn = []
     for i in range(0, len(QUALITIES)-1, 2):
         btn.append([
@@ -932,7 +962,7 @@ async def qualities_cb_handler(client: Client, query: CallbackQuery):
     )
     req = query.from_user.id
     offset = 0
-    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ↭", callback_data=f"fl#homepage#{key}")])
+    btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fl#homepage#{key}")])
 
     await query.edit_message_reply_markup(InlineKeyboardMarkup(btn))
     
@@ -941,7 +971,10 @@ async def qualities_cb_handler(client: Client, query: CallbackQuery):
 async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     _, qual, key = query.data.split("#")
     search = FRESH.get(key)
-    search = search.replace("_", " ")
+    try:
+        search = search.replace(' ', '_')
+    except:
+        pass
     baal = qual in search
     if baal:
         search = search.replace(qual, "")
@@ -964,7 +997,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     BUTTONS[key] = search
 
     files, offset, total_results = await get_search_results(chat_id, search, offset=0, filter=True)
-    # files = [file for file in files if re.search(lang, file.file_name, re.IGNORECASE)]
+    # files = [file for file in files if re.search(lang, file["file_name"], re.IGNORECASE)]
     if not files:
         await query.answer("🚫 𝗡𝗼 𝗙𝗶𝗹𝗲 𝗪𝗲𝗿𝗲 𝗙𝗼𝘂𝗻𝗱 🚫", show_alert=1)
         return
@@ -975,7 +1008,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"⚜️[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"⚜️[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}", callback_data=f'{pre}#{file["file_id"]}'
                 ),
             ]
             for file in files
@@ -984,12 +1017,12 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}",
-                    callback_data=f'{pre}#{file.file_id}',
+                    text=f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}",
+                    callback_data=f'{pre}#{file["file_id"]}',
                 ),
                 InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}",
-                    callback_data=f'{pre}#{file.file_id}',
+                    text=f"{get_size(file['file_size'])}",
+                    callback_data=f'{pre}#{file["file_id"]}',
                 ),
             ]
             for file in files
@@ -1059,6 +1092,10 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
         btn.append(
             [InlineKeyboardButton(text="😶 ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ 😶",callback_data="pages")]
         )
+    if lang != "homepage":
+        req = query.from_user.id
+        offset = 0
+        btn.append([InlineKeyboardButton(text="↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"next_{req}_{key}_{offset}")])
     try:
         await query.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(btn)
@@ -1070,10 +1107,6 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
                 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
-    try:
-        link = await client.create_chat_invite_link(int(REQST_CHANNEL))
-    except:
-        pass
     if query.data == "close_data":
         await query.message.delete()
     elif query.data == "get_trail":
@@ -1320,10 +1353,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
         files_ = await get_file_details(file_id)
         if not files_:
             return await query.answer('Nᴏ sᴜᴄʜ ғɪʟᴇ ᴇxɪsᴛ.')
-        files = files_[0]
-        title = files.file_name
-        size = get_size(files.file_size)
-        f_caption = files.caption
+        files = files_
+        title = files["file_name"]
+        size = get_size(files["file_size"])
+        f_caption = files["caption"]
         settings = await get_settings(query.message.chat.id)
         if CUSTOM_FILE_CAPTION:
             try:
@@ -1334,7 +1367,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 logger.exception(e)
             f_caption = f_caption
         if f_caption is None:
-            f_caption = f"{files.file_name}"
+            f_caption = f"{files['file_name']}"
 
         try:
             if settings['is_shortlink'] and not await db.has_premium_access(query.from_user.id):
@@ -1420,10 +1453,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
         files_ = await get_file_details(file_id)
         if not files_:
             return await query.answer('Nᴏ sᴜᴄʜ ғɪʟᴇ ᴇxɪsᴛ.')
-        files = files_[0]
-        title = files.file_name
-        size = get_size(files.file_size)
-        f_caption = files.caption
+        files = files
+        title = files['file_name']
+        size = get_size(files['file_size'])
+        f_caption = files['caption']
         settings = await get_settings(query.message.chat.id)
         if CUSTOM_FILE_CAPTION:
             try:
@@ -1434,7 +1467,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 logger.exception(e)
             f_caption = f_caption
         if f_caption is None:
-            f_caption = f"{files.file_name}"
+            f_caption = f"{files['file_name']}"
         await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=file_{file_id}")
     
     elif query.data.startswith("checksub"):
@@ -1450,9 +1483,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data.startswith("send_fsall"):
         temp_var, ident, key, offset = query.data.split("#")
         search = BUTTON0.get(key)
-        if not search:
-            await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name),show_alert=True)
-            return
+     #   if not search:
+      #      await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name),show_alert=True)
+      #      return
         files, n_offset, total = await get_search_results(query.message.chat.id, search, offset=int(offset), filter=True)
         await send_all(client, query.from_user.id, files, ident, query.message.chat.id, query.from_user.first_name, query)
         search = BUTTONS1.get(key)
@@ -1465,13 +1498,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
     elif query.data.startswith("send_fall"):
         temp_var, ident, key, offset = query.data.split("#")
-        if BUTTONS.get(key)!=None:
-            search = BUTTONS.get(key)
-        else:
-            search = FRESH.get(key)
-        if not search:
-            await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name),show_alert=True)
-            return
+        search = FRESH.get(key)
+     #   if not search:
+       #     await query.answer(script.OLD_ALRT_TXT.format(query.from_user.first_name),show_alert=True)
+      #      return
         files, n_offset, total = await get_search_results(query.message.chat.id, search, offset=int(offset), filter=True)
         await send_all(client, query.from_user.id, files, ident, query.message.chat.id, query.from_user.first_name, query)
         await query.answer(f"Hey {query.from_user.first_name}, All files on this page has been sent successfully to your PM !", show_alert=True)
@@ -1486,15 +1516,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
         async with lock:
             try:
                 for file in files:
-                    file_ids = file.file_id
-                    file_name = file.file_name
-                    result = await Media.collection.delete_one({
-                        '_id': file_ids,
+                    file_ids = file["file_id"]
+                    file_name = file["file_name"]
+                    result = col.delete_one({
+                        'file_id': file_ids,
                     })
+                    if not result.deleted_count:
+                        result = sec_col.delete_one({
+                            'file_id': file_ids,
+                        })
                     if result.deleted_count:
                         logger.info(f'File Found for your query {keyword}! Successfully deleted {file_name} from database.')
                     deleted += 1
-                    if deleted % 20 == 0:
+                    if deleted % 50 == 0:
                         await query.message.edit_text(f"<b>Process started for deleting files from DB. Successfully deleted {str(deleted)} files from DB for your query {keyword} !\n\nPlease wait...</b>")
             except Exception as e:
                 logger.exception(e)
@@ -2266,15 +2300,21 @@ async def cb_handler(client: Client, query: CallbackQuery):
             InputMediaPhoto(random.choice(PICS))
         )
         reply_markup = InlineKeyboardMarkup(buttons)
-        total = await Media.count_documents()
-        users = await db.total_users_count()
-        chats = await db.total_chat_count()
-        monsize = await db.get_db_size()
-        free = 536870912 - monsize
-        monsize = get_size(monsize)
-        free = get_size(free)
+        total_users = await db.total_users_count()
+        totl_chats = await db.total_chat_count()
+        filesp = col.count_documents({})
+        totalsec = sec_col.count_documents({})
+        stats = vjdb.command('dbStats')
+        used_dbSize = (stats['dataSize']/(1024*1024))+(stats['indexSize']/(1024*1024))
+        free_dbSize = 512-used_dbSize
+        stats2 = sec_db.command('dbStats')
+        used_dbSize2 = (stats2['dataSize']/(1024*1024))+(stats2['indexSize']/(1024*1024))
+        free_dbSize2 = 512-used_dbSize2
+        stats3 = mydb.command('dbStats')
+        used_dbSize3 = (stats3['dataSize']/(1024*1024))+(stats3['indexSize']/(1024*1024))
+        free_dbSize3 = 512-used_dbSize3
         await query.message.edit_text(
-            text=script.STATUS_TXT.format(total, users, chats, monsize, free),
+            text=script.STATUS_TXT.format((int(filesp)+int(totalsec)), total_users, totl_chats, filesp, round(used_dbSize, 2), round(free_dbSize, 2), totalsec, round(used_dbSize2, 2), round(free_dbSize2, 2), round(used_dbSize3, 2), round(free_dbSize3, 2)),
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
@@ -2290,15 +2330,21 @@ async def cb_handler(client: Client, query: CallbackQuery):
             InputMediaPhoto(random.choice(PICS))
         )
         reply_markup = InlineKeyboardMarkup(buttons)
-        total = await Media.count_documents()
-        users = await db.total_users_count()
-        chats = await db.total_chat_count()
-        monsize = await db.get_db_size()
-        free = 536870912 - monsize
-        monsize = get_size(monsize)
-        free = get_size(free)
+        total_users = await db.total_users_count()
+        totl_chats = await db.total_chat_count()
+        filesp = col.count_documents({})
+        totalsec = sec_col.count_documents({})
+        stats = vjdb.command('dbStats')
+        used_dbSize = (stats['dataSize']/(1024*1024))+(stats['indexSize']/(1024*1024))
+        free_dbSize = 512-used_dbSize
+        stats2 = sec_db.command('dbStats')
+        used_dbSize2 = (stats2['dataSize']/(1024*1024))+(stats2['indexSize']/(1024*1024))
+        free_dbSize2 = 512-used_dbSize2
+        stats3 = mydb.command('dbStats')
+        used_dbSize3 = (stats3['dataSize']/(1024*1024))+(stats3['indexSize']/(1024*1024))
+        free_dbSize3 = 512-used_dbSize3
         await query.message.edit_text(
-            text=script.STATUS_TXT.format(total, users, chats, monsize, free),
+            text=script.STATUS_TXT.format((int(filesp)+int(totalsec)), total_users, totl_chats, filesp, round(used_dbSize, 2), round(free_dbSize, 2), totalsec, round(used_dbSize2, 2), round(free_dbSize2, 2), round(used_dbSize3, 2), round(free_dbSize3, 2)),
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
@@ -2765,6 +2811,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
         await msg.message.delete()
     pre = 'filep' if settings['file_secure'] else 'file'
     key = f"{message.chat.id}-{message.id}"
+    req = message.from_user.id if message.from_user else 0
     FRESH[key] = search
     temp.GETALL[key] = files
     temp.SHORT[message.from_user.id] = message.chat.id
@@ -2772,7 +2819,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}", callback_data=f'{pre}#{file["file_id"]}'
                 ),
             ]
             for file in files
@@ -2804,7 +2851,6 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
             InlineKeyboardButton("ʏᴇᴀʀs", callback_data=f"years#{key}")
         ])
     if offset != "":
-        req = message.from_user.id if message.from_user else 0
         try:
             if settings['max_btn']:
                 btn.append(
@@ -2864,7 +2910,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
         if not settings["button"]:
             cap+="<b>\n\n<u>🍿 Your Movie Files 👇</u></b>\n"
             for file in files:
-                cap += f"<b>\n📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}'>[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}\n</a></b>"
+                cap += f"<b>\n📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n</a></b>"
     else:
         if settings["button"]:
             cap = f"<b>Tʜᴇ Rᴇꜱᴜʟᴛꜱ Fᴏʀ ☞ {search}\n\nRᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention}\n\nʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ ☞ {remaining_seconds} sᴇᴄᴏɴᴅs\n\nᴘᴏᴡᴇʀᴇᴅ ʙʏ ☞ : {message.chat.title} \n\n⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️\n\n</b>"
@@ -2872,7 +2918,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
             cap = f"<b>Tʜᴇ Rᴇꜱᴜʟᴛꜱ Fᴏʀ ☞ {search}\n\nRᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention}\n\nʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ ☞ {remaining_seconds} sᴇᴄᴏɴᴅs\n\nᴘᴏᴡᴇʀᴇᴅ ʙʏ ☞ : {message.chat.title} \n\n⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️\n\n</b>"
             cap+="<b><u>🍿 Your Movie Files 👇</u></b>\n\n"
             for file in files:
-                cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}'>[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}\n\n</a></b>"
+                cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file['file_id']}'>[{get_size(file['file_size'])}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file['file_name'].split()))}\n\n</a></b>"
 
     if imdb and imdb.get('poster'):
         try:

@@ -7,7 +7,7 @@ from Script import script
 from pyrogram import Client, filters, enums
 from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import *
-from database.ia_filterdb import Media, get_file_details, unpack_new_file_id, get_bad_files
+from database.ia_filterdb import col, sec_col, get_file_details, unpack_new_file_id, get_bad_files
 from database.users_chats_db import db, delete_all_referal_users, get_referal_users_count, get_referal_all_users, referal_add_user
 from database.join_reqs import JoinReqs
 from info import CLONE_MODE, CHANNELS, REQUEST_TO_JOIN_MODE, TRY_AGAIN_BTN, ADMINS, SHORTLINK_MODE, PREMIUM_AND_REFERAL_MODE, STREAM_MODE, AUTH_CHANNEL, OWNER_USERNAME, REFERAL_PREMEIUM_TIME, REFERAL_COUNT, PAYMENT_TEXT, PAYMENT_QR, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT, CHNL_LNK, GRP_LNK, REQST_CHANNEL, SUPPORT_CHAT_ID, SUPPORT_CHAT, MAX_B_TN, VERIFY, SHORTLINK_API, SHORTLINK_URL, TUTORIAL, VERIFY_TUTORIAL, IS_TUTORIAL, URL
@@ -91,40 +91,44 @@ async def start(client, message):
             else:
                 invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL))
         except ChatAdminRequired:
-            logger.error("Make sure Bot is admin in Forcesub channel")
+            await message.reply_text("Make sure Bot is admin in Forcesub channel")
             return
-        btn = [[
-            InlineKeyboardButton("❆ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ ❆", url=invite_link.invite_link)
-        ]]
-        if message.command[1] != "subscribe":
-            if REQUEST_TO_JOIN_MODE == True:
-                if TRY_AGAIN_BTN == True:
+        try:
+            btn = [[
+                InlineKeyboardButton("❆ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ ❆", url=invite_link.invite_link)
+            ]]
+            if message.command[1] != "subscribe":
+                if REQUEST_TO_JOIN_MODE == True:
+                    if TRY_AGAIN_BTN == True:
+                        try:
+                            kk, file_id = message.command[1].split("_", 1)
+                            btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", callback_data=f"checksub#{kk}#{file_id}")])
+                        except (IndexError, ValueError):
+                            btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
+                else:
                     try:
                         kk, file_id = message.command[1].split("_", 1)
                         btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", callback_data=f"checksub#{kk}#{file_id}")])
                     except (IndexError, ValueError):
                         btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
+            if REQUEST_TO_JOIN_MODE == True:
+                if TRY_AGAIN_BTN == True:
+                    text = "**🕵️ Jᴏɪɴ Tʜᴇ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Tᴏ Gᴇᴛ Mᴏᴠɪᴇ Fɪʟᴇ\n\n👨‍💻 Fɪʀsᴛ Cʟɪᴄᴋ Oɴ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Bᴜᴛᴛᴏɴ, Tʜᴇɴ Cʟɪᴄᴋ Oɴ Rᴇǫᴜᴇsᴛ Tᴏ Jᴏɪɴ Bᴜᴛᴛᴏɴ Aғᴛᴇʀ Cʟɪᴄᴋ Oɴ Tʀʏ Aɢᴀɪɴ Bᴜᴛᴛᴏɴ.**"
+                else:
+                    await db.set_msg_command(message.from_user.id, com=message.command[1])
+                    text = "**🕵️ Jᴏɪɴ Tʜᴇ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Tᴏ Gᴇᴛ Mᴏᴠɪᴇ Fɪʟᴇ\n\n👨‍💻 Fɪʀsᴛ Cʟɪᴄᴋ Oɴ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Bᴜᴛᴛᴏɴ, Tʜᴇɴ Cʟɪᴄᴋ Oɴ Rᴇǫᴜᴇsᴛ Tᴏ Jᴏɪɴ Bᴜᴛᴛᴏɴ.**"
             else:
-                try:
-                    kk, file_id = message.command[1].split("_", 1)
-                    btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", callback_data=f"checksub#{kk}#{file_id}")])
-                except (IndexError, ValueError):
-                    btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
-        if REQUEST_TO_JOIN_MODE == True:
-            if TRY_AGAIN_BTN == True:
-                text = "**🕵️ Jᴏɪɴ Tʜᴇ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Tᴏ Gᴇᴛ Mᴏᴠɪᴇ Fɪʟᴇ\n\n👨‍💻 Fɪʀsᴛ Cʟɪᴄᴋ Oɴ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Bᴜᴛᴛᴏɴ, Tʜᴇɴ Cʟɪᴄᴋ Oɴ Rᴇǫᴜᴇsᴛ Tᴏ Jᴏɪɴ Bᴜᴛᴛᴏɴ Aғᴛᴇʀ Cʟɪᴄᴋ Oɴ Tʀʏ Aɢᴀɪɴ Bᴜᴛᴛᴏɴ.**"
-            else:
-                await db.set_msg_command(message.from_user.id, com=message.command[1])
-                text = "**🕵️ Jᴏɪɴ Tʜᴇ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Tᴏ Gᴇᴛ Mᴏᴠɪᴇ Fɪʟᴇ\n\n👨‍💻 Fɪʀsᴛ Cʟɪᴄᴋ Oɴ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Bᴜᴛᴛᴏɴ, Tʜᴇɴ Cʟɪᴄᴋ Oɴ Rᴇǫᴜᴇsᴛ Tᴏ Jᴏɪɴ Bᴜᴛᴛᴏɴ.**"
-        else:
-            text = "**🕵️ Jᴏɪɴ Tʜᴇ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Tᴏ Gᴇᴛ Mᴏᴠɪᴇ Fɪʟᴇ\n\n👨‍💻 Fɪʀsᴛ  Cʟɪᴄᴋ Oɴ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Bᴜᴛᴛᴏɴ, Tʜᴇɴ Jᴏɪɴ Cʜᴀɴɴᴇʟ Aғᴛᴇʀ Cʟɪᴄᴋ Oɴ Tʀʏ Aɢᴀɪɴ Bᴜᴛᴛᴏɴ**"
-        await client.send_message(
-            chat_id=message.from_user.id,
-            text=text,
-            reply_markup=InlineKeyboardMarkup(btn),
-            parse_mode=enums.ParseMode.MARKDOWN
-            )
-        return
+                text = "**🕵️ Jᴏɪɴ Tʜᴇ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Tᴏ Gᴇᴛ Mᴏᴠɪᴇ Fɪʟᴇ\n\n👨‍💻 Fɪʀsᴛ  Cʟɪᴄᴋ Oɴ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Bᴜᴛᴛᴏɴ, Tʜᴇɴ Jᴏɪɴ Cʜᴀɴɴᴇʟ Aғᴛᴇʀ Cʟɪᴄᴋ Oɴ Tʀʏ Aɢᴀɪɴ Bᴜᴛᴛᴏɴ**"
+            await client.send_message(
+                chat_id=message.from_user.id,
+                text=text,
+                reply_markup=InlineKeyboardMarkup(btn),
+                parse_mode=enums.ParseMode.MARKDOWN
+                )
+            return
+        except:
+            await message.reply_text("something wrong with force subscribe.")
+            
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
         if PREMIUM_AND_REFERAL_MODE == True:
             buttons = [[
@@ -422,9 +426,9 @@ async def start(client, message):
         chat_id = temp.SHORT.get(user)
         settings = await get_settings(chat_id)
         files_ = await get_file_details(file_id)
-        files = files_[0]
+        files = files_
         g = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start=file_{file_id}")
-        k = await client.send_message(chat_id=user,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files.file_name}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files.file_size)}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(
+        k = await client.send_message(chat_id=user,text=f'<b>📕Nᴀᴍᴇ ➠ : <code>{files["file_name"]}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files["file_size"])}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>', reply_markup=InlineKeyboardMarkup(
                 [
                     [
                         InlineKeyboardButton('📂 Dᴏᴡɴʟᴏᴀᴅ Nᴏᴡ 📂', url=g)
@@ -444,12 +448,12 @@ async def start(client, message):
             return await message.reply('<b><i>No such file exist.</b></i>')
         filesarr = []
         for file in files:
-            file_id = file.file_id
+            file_id = file["file_id"]
             files_ = await get_file_details(file_id)
-            files1 = files_[0]
-            title = ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1.file_name.split()))
-            size=get_size(files1.file_size)
-            f_caption=files1.caption
+            files1 = files_
+            title = ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1["file_name"].split()))
+            size=get_size(files1["file_size"])
+            f_caption=files1["caption"]
             if CUSTOM_FILE_CAPTION:
                 try:
                     f_caption=CUSTOM_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
@@ -457,7 +461,7 @@ async def start(client, message):
                     logger.exception(e)
                     f_caption=f_caption
             if f_caption is None:
-                f_caption = f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1.file_name.split()))}"
+                f_caption = f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1['file_name'].split()))}"
             if not await db.has_premium_access(message.from_user.id):
                 if not await check_verification(client, message.from_user.id) and VERIFY == True:
                     btn = [[
@@ -511,9 +515,9 @@ async def start(client, message):
         settings = await get_settings(chat_id)
         if settings['is_shortlink'] and not await db.has_premium_access(user):
             files_ = await get_file_details(file_id)
-            files = files_[0]
+            files = files_
             g = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start=file_{file_id}")
-            k = await client.send_message(chat_id=message.from_user.id,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files.file_name}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files.file_size)}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(
+            k = await client.send_message(chat_id=message.from_user.id,text=f'<b>📕Nᴀᴍᴇ ➠ : <code>{files["file_name"]}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files["file_size"])}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>', reply_markup=InlineKeyboardMarkup(
                     [
                         [
                             InlineKeyboardButton('📂 Dᴏᴡɴʟᴏᴀᴅ Nᴏᴡ 📂', url=g)
@@ -591,10 +595,10 @@ async def start(client, message):
         except:
             pass
         return await message.reply('No such file exist.')
-    files = files_[0]
-    title = '@VJ_Botz  ' + ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files.file_name.split()))
-    size=get_size(files.file_size)
-    f_caption=files.caption
+    files = files_
+    title = '@VJ_Botz  ' + ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files["file_name"].split()))
+    size=get_size(files["file_size"])
+    f_caption=files["caption"]
     if CUSTOM_FILE_CAPTION:
         try:
             f_caption=CUSTOM_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
@@ -602,7 +606,7 @@ async def start(client, message):
             logger.exception(e)
             f_caption=f_caption
     if f_caption is None:
-        f_caption = f"@VJ_Botz  {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files.file_name.split()))}"
+        f_caption = f"@VJ_Botz  {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files['file_name'].split()))}"
     if not await db.has_premium_access(message.from_user.id):
         if not await check_verification(client, message.from_user.id) and VERIFY == True:
             btn = [[
@@ -686,11 +690,11 @@ async def log_file(bot, message):
 
 @Client.on_message(filters.command('delete') & filters.user(ADMINS))
 async def delete(bot, message):
-    reply = message.reply_to_message
-    if reply and reply.media:
+    reply = await bot.ask(message.from_user.id, "Now Send Me Media Which You Want to delete")
+    if reply.media:
         msg = await message.reply("Processing...⏳", quote=True)
     else:
-        await message.reply('Reply to file with /delete which you want to delete', quote=True)
+        await message.reply('Send Me Video, File Or Document.', quote=True)
         return
 
     for file_type in ("document", "video", "audio"):
@@ -703,28 +707,40 @@ async def delete(bot, message):
     
     file_id, file_ref = unpack_new_file_id(media.file_id)
 
-    result = await Media.collection.delete_one({
-        '_id': file_id,
+    result = col.delete_one({
+        'file_id': file_id,
     })
+    if not result.deleted_count:
+        result = sec_col.delete_one({
+            'file_id': file_id,
+        })
     if result.deleted_count:
         await msg.edit('File is successfully deleted from database')
     else:
         file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
-        result = await Media.collection.delete_many({
+        result = col.delete_many({
             'file_name': file_name,
-            'file_size': media.file_size,
-            'mime_type': media.mime_type
+            'file_size': media.file_size
+        })
+        if not result.deleted_count:
+            result = sec_col.delete_many({
+                'file_name': file_name,
+                'file_size': media.file_size
             })
         if result.deleted_count:
             await msg.edit('File is successfully deleted from database')
         else:
             # files indexed before https://github.com/EvamariaTG/EvaMaria/commit/f3d2a1bcb155faf44178e5d7a685a1b533e714bf#diff-86b613edf1748372103e94cacff3b578b36b698ef9c16817bb98fe9ef22fb669R39 
             # have original file name.
-            result = await Media.collection.delete_many({
+            result = col.delete_many({
                 'file_name': media.file_name,
-                'file_size': media.file_size,
-                'mime_type': media.mime_type
+                'file_size': media.file_size
             })
+            if not result.deleted_count:
+                result = sec_col.delete_many({
+                    'file_name': file_name,
+                    'file_size': media.file_size
+                })
             if result.deleted_count:
                 await msg.edit('File is successfully deleted from database')
             else:
@@ -754,10 +770,11 @@ async def delete_all_index(bot, message):
 
 
 @Client.on_callback_query(filters.regex(r'^autofilter_delete'))
-async def delete_all_index_confirm(bot, message):
-    await Media.collection.drop()
-    await message.answer('Piracy Is Crime')
-    await message.message.edit('Succesfully Deleted All The Indexed Files.')
+async def delete_all_index_confirm(bot, query):
+    col.drop()
+    sec_col.drop()
+    await query.answer('Piracy Is Crime')
+    await query.message.edit('Succesfully Deleted All The Indexed Files.')
 
 
 @Client.on_message(filters.command('settings'))
